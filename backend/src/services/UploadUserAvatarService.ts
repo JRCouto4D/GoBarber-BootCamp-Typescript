@@ -5,6 +5,8 @@ import fs from 'fs';
 import User from '../models/User';
 import UploadConfig from '../config/upload';
 
+import AppError from '../errors/AppError';
+
 interface Request {
   user_id: string;
   avatarFileName: string;
@@ -21,7 +23,7 @@ class UploadUserAvatarService {
     });
 
     if (!user) {
-      throw new Error('Only authenticate users can change avatar.');
+      throw new AppError('Only authenticate users can change avatar.', 401);
       // Apenas usuários autenticados podem alterar o avatar.
     }
 
