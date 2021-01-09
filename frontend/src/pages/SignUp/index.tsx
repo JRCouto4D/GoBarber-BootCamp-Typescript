@@ -1,25 +1,69 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { FiArrowLeft, FiMail, FiLock, FiUser } from 'react-icons/fi';
+import { Form } from '@unform/web';
+import { FormHandles } from '@unform/core';
+import * as Yup from 'yup';
 
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+
+import getValidationErrors from '../../utils/getValidationErrors';
 
 import logoImg from '../../assets/logo.svg';
 
 import { Container, Content, Background } from './styles';
 
 const SignUp: React.FC = () => {
+  const formRef = useRef<FormHandles>(null);
+
+  const handleSubmit = useCallback(async (data: object) => {
+    try {
+      formRef.current?.setErrors({});
+
+      const schema = Yup.object().shape({
+        name: Yup.string().required('O nome é obrigatório.'),
+        email: Yup.string()
+          .required('O email é obrigatório.')
+          .email('Digite um email válido.'),
+        password: Yup.string().min(
+          6,
+          'A senha deve ter no mínimo seis dígitos.',
+        ),
+      });
+
+      await schema.validate(data, {
+        abortEarly: false,
+      });
+    } catch (err) {
+      const errors = getValidationErrors(err);
+
+      formRef.current?.setErrors(errors);
+    }
+  }, []);
+
   return (
     <Container>
       <Background />
       <Content>
         <img src={logoImg} alt="GoBarber" />
 
-        <form>
+        <Form ref={formRef} onSubmit={handleSubmit}>
           <h1>Faça seu cadastro</h1>
 
-          <Input name="name" icon={FiUser} placeholder="Nome" />
-          <Input name="email" icon={FiMail} placeholder="E-mail" />
+          <Input
+            name="name"
+            icon={FiUser}
+            placeholder="Nome"
+            autoComplete="none"
+            autoCapitalize="none"
+          />
+          <Input
+            name="email"
+            icon={FiMail}
+            placeholder="E-mail"
+            autoComplete="none"
+            autoCapitalize="none"
+          />
 
           <Input
             name="password"
@@ -29,7 +73,7 @@ const SignUp: React.FC = () => {
           />
 
           <Button type="submit">Cadastrar</Button>
-        </form>
+        </Form>
 
         <a href="login">
           <FiArrowLeft />
