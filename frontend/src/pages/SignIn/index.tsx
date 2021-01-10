@@ -6,6 +6,9 @@ import * as Yup from 'yup';
 
 import getValidationErrors from '../../utils/getValidationErrors';
 
+import { useAuth } from '../../hooks/auth';
+import { useToast } from '../../hooks/toast';
+
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 
@@ -16,26 +19,50 @@ import { Container, Content, Background } from './styles';
 const SignIn: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
 
-  const handleSubmit = useCallback(async (data: object) => {
-    try {
-      formRef.current?.setErrors({});
+  const { signIn } = useAuth();
+  const { addToast } = useToast();
 
-      const schema = Yup.object().shape({
-        email: Yup.string()
-          .email('Digite um email válido.')
-          .required('O email é obrigatório.'),
-        password: Yup.string().required('A senha é obrigatória.'),
-      });
+  interface SignInFormatData {
+    email: string;
+    password: string;
+  }
 
-      await schema.validate(data, {
-        abortEarly: false,
-      });
-    } catch (err) {
-      const errors = getValidationErrors(err);
+  const handleSubmit = useCallback(
+    async (data: SignInFormatData) => {
+      try {
+        formRef.current?.setErrors({});
 
-      formRef.current?.setErrors(errors);
-    }
-  }, []);
+        const schema = Yup.object().shape({
+          email: Yup.string()
+            .email('Digite um email válido.')
+            .required('O email é obrigatório.'),
+          password: Yup.string().required('A senha é obrigatória.'),
+        });
+
+        await schema.validate(data, {
+          abortEarly: false,
+        });
+
+        await signIn({
+          email: data.email,
+          password: data.password,
+        });
+      } catch (err) {
+        if (err instanceof Yup.ValidationError) {
+          const errors = getValidationErrors(err);
+
+          formRef.current?.setErrors(errors);
+        }
+
+        addToast({
+          type: 'error',
+          title: 'Erro na autenticação',
+          description: 'Ocorreu um erro ao fazer login, cheque as credenciais.',
+        });
+      }
+    },
+    [signIn, addToast],
+  );
 
   return (
     <Container>
