@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { FiArrowLeft, FiMail, FiLock, FiUser } from 'react-icons/fi';
 import { Form } from '@unform/web';
 import { FormHandles } from '@unform/core';
@@ -7,6 +7,10 @@ import * as Yup from 'yup';
 
 import Input from '../../components/Input';
 import Button from '../../components/Button';
+
+import api from '../../services/api';
+
+import { useToast } from '../../hooks/toast';
 
 import getValidationErrors from '../../utils/getValidationErrors';
 
@@ -16,6 +20,8 @@ import { Container, Content, AnimationContainer, Background } from './styles';
 
 const SignUp: React.FC = () => {
   const formRef = useRef<FormHandles>(null);
+  const { addToast } = useToast();
+  const history = useHistory();
 
   interface SignUpFormatData {
     name: string;
@@ -23,30 +29,43 @@ const SignUp: React.FC = () => {
     password: string;
   }
 
-  const handleSubmit = useCallback(async (data: SignUpFormatData) => {
-    try {
-      formRef.current?.setErrors({});
+  const handleSubmit = useCallback(
+    async (data: SignUpFormatData) => {
+      try {
+        formRef.current?.setErrors({});
 
-      const schema = Yup.object().shape({
-        name: Yup.string().required('O nome é obrigatório.'),
-        email: Yup.string()
-          .required('O email é obrigatório.')
-          .email('Digite um email válido.'),
-        password: Yup.string().min(
-          6,
-          'A senha deve ter no mínimo seis dígitos.',
-        ),
-      });
+        const schema = Yup.object().shape({
+          name: Yup.string().required('O nome é obrigatório.'),
+          email: Yup.string()
+            .required('O email é obrigatório.')
+            .email('Digite um email válido.'),
+          password: Yup.string().min(
+            6,
+            'A senha deve ter no mínimo seis dígitos.',
+          ),
+        });
 
-      await schema.validate(data, {
-        abortEarly: false,
-      });
-    } catch (err) {
-      const errors = getValidationErrors(err);
+        await schema.validate(data, {
+          abortEarly: false,
+        });
 
-      formRef.current?.setErrors(errors);
-    }
-  }, []);
+        await api.post('/users', data);
+
+        addToast({
+          type: 'success',
+          title: 'Cadastro realizado!',
+          description: 'Você já pode fazer logon no GoBarber!',
+        });
+
+        history.push('/');
+      } catch (err) {
+        const errors = getValidationErrors(err);
+
+        formRef.current?.setErrors(errors);
+      }
+    },
+    [addToast, history],
+  );
 
   return (
     <Container>
