@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import AppointmentRouter from '@modules/appointments/http/routes/appointments.routes';
+import AppointmentRouter from '@modules/appointments/infra/http/routes/appointments.routes';
 import UserRouter from '@modules/users/http/routes/users.routes';
 import eusureAuthenticated from '@modules/users/http/middlewares/eusureAuthenticated';
 import SessionRouter from './sessions.routes';
